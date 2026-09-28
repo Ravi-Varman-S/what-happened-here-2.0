@@ -1,0 +1,20 @@
+# What Happened Here? 2.0 — dependencies
+# Python 3.12 (Windows)
+
+# engine (identical to v1: load, hand-written detection, YAMNet, reporting)
+numpy==2.5.3
+scipy==1.18.1
+soundfile==0.14.0
+librosa==1.0.0
+imageio-ffmpeg==0.6.0
+sounddevice==0.5.6
+tensorflow-cpu==2.21.0
+tensorflow-hub==0.16.1
+pandas==3.0.6
+setuptools<81
+matplotlib==3.11.2
+
+# web layer
+fastapi==0.141.1
+uvicorn[standard]==0.54.0
+python-multipart==0.0.20

@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>What Happened Here? 2.0</title>
+<link rel="stylesheet" href="/static/app.css">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='80' font-size='80'>🔊</text></svg>">
+</head>
+<body>
+
+<header class="topbar">
+  <div class="brand">
+    <span class="logo">◧</span>
+    What Happened Here? <em>2.0</em>
+  </div>
+  <nav>
+    <a href="#how">How it works</a>
+    <a href="https://github.com/Ravi-Varman-S/what-happened-here" target="_blank" rel="noopener">v1 source</a>
+  </nav>
+</header>
+
+<main>
+
+  <!-- ───────────────────────── hero + upload ───────────────────────── -->
+  <section class="hero">
+    <h1>Give it <span class="grad">2–3 minutes</span> of everyday sound.</h1>
+    <p class="lede">
+      It finds where every sound event starts and stops, names it, and shows you
+      the evidence. The detector is written by hand — loudness over time, an
+      adaptive noise floor, hysteresis — and the labelling is YAMNet's job.
+    </p>
+
+    <div id="dropzone" class="dropzone" tabindex="0" role="button"
+         aria-label="Drop a recording here or click to browse">
+      <input type="file" id="fileInput" accept="audio/*,.wav,.mp3,.ogg,.flac,.m4a,.opus" hidden>
+      <div class="dz-inner">
+        <div class="dz-icon">⇪</div>
+        <div class="dz-title">Drop a recording here</div>
+        <div class="dz-sub">or click to browse — wav, mp3, ogg, flac, m4a · up to a few minutes</div>
+        <div class="dz-actions">
+          <button class="btn ghost" id="browseBtn" type="button">Choose file</button>
+          <span class="or">or</span>
+          <button class="btn primary" id="micBtn" type="button">🎙 Record in the browser</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- live recorder -->
+    <div id="recorder" class="recorder" hidden>
+      <div class="rec-head">
+        <span class="dot"></span>
+        <span id="recStatus">Countdown…</span>
+        <span class="spacer"></span>
+        <button class="btn ghost small" id="recStop" type="button">Stop &amp; analyse</button>
+      </div>
+      <div class="meter">
+        <div class="meter-fill" id="meterFill"></div>
+        <div class="meter-thresh" title="0.99 full scale"></div>
+      </div>
+      <div class="rec-foot">
+        <span id="recTime">0.0 s</span>
+        <span id="recPeak">peak —</span>
+        <span id="recHint">Speak, move things, close a door — make it sound like a real room.</span>
+      </div>
+    </div>
+
+    <!-- tuning -->
+    <details class="tuning">
+      <summary>Tuning <span class="muted">(engine defaults — same numbers as v1)</span></summary>
+      <div class="grid">
+        <label>Start margin <span class="unit">dB</span>
+          <input id="on_margin" type="number" step="0.5" min="0" max="60"></label>
+        <label>Stop margin <span class="unit">dB</span>
+          <input id="off_margin" type="number" step="0.5" min="0" max="60"></label>
+        <label>Attack <span class="unit">s</span>
+          <input id="attack" type="number" step="0.05" min="0" max="10"></label>
+        <label>Release <span class="unit">s</span>
+          <input id="release" type="number" step="0.05" min="0" max="10"></label>
+        <label>Merge gaps under <span class="unit">s</span>
+          <input id="merge_gap" type="number" step="0.05" min="0" max="30"></label>
+        <label>Drop events under <span class="unit">s</span>
+          <input id="min_duration" type="number" step="0.05" min="0" max="10"></label>
+        <label>Analyse first <span class="unit">s (0 = all)</span>
+          <input id="duration" type="number" step="10" min="0" max="3600"></label>
+        <label class="check"><input id="skip_model" type="checkbox">
+          Skip the model <span class="muted">(fast, no labelling)</span></label>
+      </div>
+      <button class="btn ghost small" id="resetParams" type="button">Reset to defaults</button>
+    </details>
+
+    <button class="btn primary big" id="analyseBtn" type="button" hidden>
+      Analyse this recording
+    </button>
+    <p id="pending" class="pending" hidden></p>
+  </section>
+
+  <!-- ───────────────────────── progress ───────────────────────── -->
+  <section id="progress" class="progress" hidden>
+    <div class="step" data-step="1"><span class="idx">1</span>
+      <div><b>Load &amp; clean</b><small id="s1">decode → mono → 16 kHz → normalise</small></div></div>
+    <div class="step" data-step="2"><span class="idx">2</span>
+      <div><b>Detect start / stop</b><small id="s2">hand-written energy detector</small></div></div>
+    <div class="step" data-step="3"><span class="idx">3</span>
+      <div><b>Label with YAMNet</b><small id="s3">521 sound classes</small></div></div>
+    <div class="step" data-step="4"><span class="idx">4</span>
+      <div><b>Report</b><small id="s4">spectrogram + table</small></div></div>
+    <div class="pbar"><i id="pbarFill"></i></div>
+  </section>
+
+  <div id="error" class="error" hidden></div>
+
+  <!-- ───────────────────────── results ───────────────────────── -->
+  <section id="results" class="results" hidden>
+
+    <div class="cards">
+      <div class="card"><span class="k" id="cEvents">–</span><span class="l">events found</span></div>
+      <div class="card"><span class="k" id="cActive">–</span><span class="l">of the recording was active</span></div>
+      <div class="card"><span class="k" id="cSpeech">–</span><span class="l">speech coverage</span></div>
+      <div class="card"><span class="k" id="cLen">–</span><span class="l">analysed</span></div>
+    </div>
+
+    <p id="sentence" class="sentence"></p>
+
+    <div class="panel">
+      <div class="panel-head">
+        <h2>Spectrogram</h2>
+        <div class="panel-actions">
+          <a class="btn ghost small" id="dlCsv" download>⬇ CSV</a>
+          <a class="btn ghost small" id="dlTxt" download>⬇ Table</a>
+          <a class="btn ghost small" id="dlSum" download>⬇ Summary</a>
+          <a class="btn ghost small" id="dlImg" target="_blank">Open image</a>
+        </div>
+      </div>
+      <p class="hint">Top panel: the sound with every detected event shaded and numbered.
+        Bottom panel: the loudness curve, the adaptive noise floor and both thresholds —
+        click any table row to jump the player to that moment.</p>
+      <img id="spec" alt="Spectrogram with detected events" loading="lazy">
+
+      <audio id="player" controls preload="none"></audio>
+    </div>
+
+    <div class="panel">
+      <div class="panel-head">
+        <h2>Event table</h2>
+        <div class="panel-actions">
+          <input id="filter" type="search" placeholder="Filter labels… (e.g. Speech)">
+          <span class="muted" id="rowCount"></span>
+        </div>
+      </div>
+      <div class="table-wrap">
+        <table id="table">
+          <thead>
+            <tr>
+              <th data-key="i">#</th>
+              <th data-key="start">Start</th>
+              <th data-key="end">End</th>
+              <th data-key="dur">Duration</th>
+              <th data-key="plain">Event</th>
+              <th data-key="score">Confidence</th>
+              <th data-key="runner">Runner-up</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+      <p class="hint muted">Labels marked <b>(?)</b> are the model's best guess when it was unsure —
+        or when its own favourite answer was <em>Silence</em>, a class the energy detector
+        has already ruled out.</p>
+    </div>
+
+    <div class="panel" id="countsPanel">
+      <div class="panel-head"><h2>What it heard</h2></div>
+      <div id="counts" class="chips"></div>
+    </div>
+
+    <div class="center">
+      <button class="btn ghost" id="againBtn" type="button">Analyse another recording</button>
+    </div>
+  </section>
+
+  <!-- ───────────────────────── how it works ───────────────────────── -->
+  <section id="how" class="how">
+    <h2>How it works</h2>
+    <div class="steps">
+      <div class="stepcard"><span>1</span><b>Load &amp; clean</b>
+        <p>Decode (ffmpeg fallback for stubborn formats), downmix to mono, resample to
+        16 kHz, normalise to −26 dB RMS behind a peak ceiling.</p></div>
+      <div class="stepcard"><span>2</span><b>Detect, by hand</b>
+        <p>25 ms frames every 10 ms → RMS → dB. A rolling 25th percentile over 5 s
+        estimates the ambient floor; +6 dB opens an event, +4 dB closes it, and the level
+        must hold 0.10 s either way.</p></div>
+      <div class="stepcard"><span>3</span><b>Label</b>
+        <p>YAMNet runs once over the file; each event takes the mean score of the windows
+        inside it. Silence, Noise and Static are ruled out — the detector already proved
+        sound is there.</p></div>
+      <div class="stepcard"><span>4</span><b>Report</b>
+        <p>A labelled spectrogram with the threshold curves underneath, plus a timing
+        table, CSV, summary counts and speech coverage.</p></div>
+    </div>
+  </section>
+
+</main>
+
+<footer>
+  <p>What Happened Here? 2.0 — same engine as
+     <a href="https://github.com/Ravi-Varman-S/what-happened-here" target="_blank" rel="noopener">v1</a>,
+     served in a browser. Detection is hand-written; labelling is YAMNet (521 AudioSet classes).</p>
+</footer>
+
+<script src="/static/app.js"></script>
+</body>
+</html>

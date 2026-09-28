@@ -1,0 +1,15 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.installed
+
+# generated per-run output
+results/
+
+# editor / OS
+.vscode/
+.idea/
+Thumbs.db
+.DS_Store
