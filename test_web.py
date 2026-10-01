@@ -92,7 +92,34 @@ if result:
     if fast:
         check("detection still ran", len(fast["events"]) > 0, f"{len(fast['events'])} events")
 
-print("5. rejection of nonsense uploads")
+print("5. live labelling (/api/live)")
+import io as _io
+
+import numpy as _np
+import soundfile as _sf
+
+# a 2.5 s slice of the street clip (24.0–26.5 s is the "Vehicle" stretch)
+_data, _sr = _sf.read(AUDIO, dtype="float32", always_2d=True)
+_seg = _data[int(24.0 * _sr):int(26.5 * _sr)]
+_buf = _io.BytesIO()
+_sf.write(_buf, _seg, _sr, format="WAV")
+_buf.seek(0)
+live = httpx.post(BASE + "/api/live", files={"file": ("chunk.wav", _buf, "audio/wav")},
+                  timeout=300)
+check("POST /api/live", live.status_code == 200, live.status_code)
+_top = live.json().get("top", []) if live.status_code == 200 else []
+check("top classes returned", len(_top) > 0, _top[:2])
+check("scores are probabilities", all(0.0 <= c["score"] <= 1.0 for c in _top), _top[:1])
+
+_hush = _io.BytesIO()
+_sf.write(_hush, _np.zeros(int(2 * 16000), dtype="float32"), 16000, format="WAV")
+_hush.seek(0)
+quiet = httpx.post(BASE + "/api/live", files={"file": ("hush.wav", _hush, "audio/wav")},
+                   timeout=60)
+check("silence is not labelled", quiet.status_code == 200 and quiet.json().get("quiet") is True,
+      quiet.json() if quiet.status_code == 200 else quiet.status_code)
+
+print("6. rejection of nonsense uploads")
 bad = httpx.post(BASE + "/api/analyse", files={"file": ("x.exe", b"MZ", "application/x")}, timeout=30)
 check("non-audio rejected", bad.status_code == 400, bad.status_code)
 

@@ -4,7 +4,10 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>What Happened Here? 2.0</title>
-<link rel="stylesheet" href="/static/app.css">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Space+Grotesk:wght@500;600;700&display=swap">
+<link rel="stylesheet" href="/static/app.css?v=20261001c">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='80' font-size='80'>🔊</text></svg>">
 </head>
 <body>
@@ -202,12 +205,33 @@
 
 </main>
 
+<!-- ───────────────── live popup: what the mic hears right now ───────────────── -->
+<aside id="livePopup" class="live-popup" hidden aria-live="polite">
+  <div class="lp-head">
+    <span class="lp-dot" id="lpDot"></span>
+    <b id="lpTitle">Live monitor</b>
+    <span class="spacer"></span>
+    <span class="lp-clock" id="lpClock">0.0 s</span>
+    <button class="lp-x" id="lpClose" type="button" title="Hide" aria-label="Hide live monitor">✕</button>
+  </div>
+  <div class="lp-status quiet" id="lpStatus">Getting the microphone…</div>
+  <div class="lp-ident" id="lpIdent" hidden></div>
+  <div class="lp-bars" id="lpBars" aria-hidden="true"></div>
+  <div class="lp-feed" id="lpFeed">
+    <div class="lp-empty">Anything you say or do shows up here as it happens.</div>
+  </div>
+  <div class="lp-foot" id="lpFoot" hidden>
+    Live labels come from YAMNet over the last 1.8&nbsp;s of audio — the full
+    analysis below re-runs it over the whole recording and shows the evidence.
+  </div>
+</aside>
+
 <footer>
   <p>What Happened Here? 2.0 — same engine as
      <a href="https://github.com/Ravi-Varman-S/what-happened-here" target="_blank" rel="noopener">v1</a>,
      served in a browser. Detection is hand-written; labelling is YAMNet (521 AudioSet classes).</p>
 </footer>
 
-<script src="/static/app.js"></script>
+<script src="/static/app.js?v=20261001c"></script>
 </body>
 </html>

@@ -8,6 +8,11 @@ venv/
 # generated per-run output
 results/
 
+# local test artifacts / screenshots
+.playwright-mcp/
+app-open.png
+mic-record-verified.png
+
 # editor / OS
 .vscode/
 .idea/

@@ -22,6 +22,12 @@ the same command just starts. `run.bat 9000` uses a different port, and
 
 ## What you get in the browser
 
+- **An instrument-bench UI** — the page is skinned as an oscilloscope: a phosphor
+  graticule background with CRT scanlines and a signal rail sweeping across the
+  top, glowing green/cyan monospace readouts (JetBrains Mono) under technical
+  display headings (Space Grotesk), a reticle-cornered dropzone, an LED-segment
+  level meter, and every section drawn like a rack module. Pure CSS over the
+  same markup, with system-font fallbacks when offline.
 - **Drag and drop** a wav/mp3/ogg/flac/m4a, or **record straight from the
   microphone** — countdown, live level meter with a clipping warning, hard cap
   at 180 s, encoded to WAV in the page and uploaded automatically.
@@ -36,6 +42,16 @@ the same command just starts. `run.bat 9000` uses a different port, and
 - **A sortable, searchable event table** with confidence bars, runner-up labels
   and an amber `(?)` badge whenever the model was guessing.
 - **Downloads**: CSV, plain-text table, summary, and the original image.
+- **Live popup while you record** — a floating monitor that reacts to the room
+  in real time: a big 🤫 *Quiet* / 🔊 *Sound detected* / 🗣 *Speaking* status,
+  animated level bars (log-mapped 60 Hz–10 kHz), and a running feed of every
+  event the moment it happens (`00:05.4 🗣 Speaking 2.6s · voice`,
+  `00:01.4 🔊 Sound 0.1s · short & sharp — a tap, clap or clack?`). When you
+  stop, it flips to a summary of what it heard — *“Heard 9 live events in 25 s —
+  6 speaking · 3 other”* — and stays on screen next to the full analysis. It is
+  the same 6/4 dB hysteresis as the engine, run block-by-block in the browser,
+  plus a pitch-strength test to tell a voice from a bang (tuned against YAMNet's
+  labels on a 94-second room recording).
 - **Tuning panel** with every detector parameter exposed — the same numbers as
   v1 (`+6 dB` start, `+4 dB` stop, `0.10 s` attack/release, `0.40 s` merge,
   `0.10 s` minimum), read from the engine at `/api/config` so the UI can never

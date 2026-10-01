@@ -21,6 +21,8 @@ import json
 import os
 import re
 import shutil
+import tempfile
+import threading
 import uuid
 import warnings
 from pathlib import Path
@@ -42,6 +44,22 @@ RESULTS.mkdir(exist_ok=True)
 
 app = FastAPI(title="What Happened Here? 2.0", docs_url="/api/docs")
 
+
+@app.middleware("http")
+async def _no_stale_assets(request, call_next):
+    """Always revalidate the page and its assets.
+
+    Without this the browser may heuristically cache index.html and app.js
+    *separately* and later run a new script against an old page — which
+    breaks the app in confusing ways (e.g. "the Record button does
+    nothing").  no-cache still allows 304 revalidation, so it costs
+    nothing on normal loads.
+    """
+    response = await call_next(request)
+    if request.url.path == "/" or request.url.path.startswith("/static/"):
+        response.headers["Cache-Control"] = "no-cache"
+    return response
+
 # The model takes a few seconds to load, so it is built once and reused.
 _LABELLER: E.YamnetLabeller | None = None
 
@@ -51,6 +69,24 @@ def labeller() -> E.YamnetLabeller:
     if _LABELLER is None:
         _LABELLER = E.YamnetLabeller()
     return _LABELLER
+
+
+# Inference runs in FastAPI's worker threads; TensorFlow is happiest with one
+# call at a time, and the live endpoint and the full analysis may overlap.
+_LIVE_LOCK = threading.Lock()
+
+
+def _warm_model() -> None:
+    """Start loading YAMNet at boot so the first live label is not a long wait."""
+    try:
+        labeller()
+    except Exception:                                   # pragma: no cover
+        pass
+
+
+@app.on_event("startup")
+def _startup() -> None:
+    threading.Thread(target=_warm_model, daemon=True).start()
 
 
 # --------------------------------------------------------------------------- #
@@ -160,7 +196,8 @@ def _analyse(src: Path, run_dir: Path, rid: str, p: dict):
         yield _sse({"type": "stage", "n": 3, "label": "Label with YAMNet",
                     "detail": "loading model on first run..."})
         model = labeller()
-        scores, centers = model.scores(audio, E.TARGET_SR)
+        with _LIVE_LOCK:
+            scores, centers = model.scores(audio, E.TARGET_SR)
         labels = model.labels
         events = E.label_events(events, scores, centers, labels)
         yield _sse({"type": "stage", "n": 3, "status": "done",
@@ -256,6 +293,70 @@ def config():
     }
 
 
+@app.post("/api/live")
+def live(file: UploadFile = File(...)):
+    """Label whatever the microphone is hearing *right now*.
+
+    The recorder posts the last ~1.8 s of audio every 1.2 s while it is
+    capturing, so the live popup can name the sound with the same 521-class
+    YAMNet model the full analysis uses — "Whistling", "Bark", "Speech" …
+
+    Returns the top few classes ranked by their best window score (max, not
+    mean, so a short bark inside a longer chunk still wins).
+    """
+    raw = file.file.read()
+    if len(raw) < 2000:
+        raise HTTPException(400, "chunk too small")
+
+    tmp = Path(tempfile.gettempdir()) / f"whh_live_{uuid.uuid4().hex}.wav"
+    try:
+        tmp.write_bytes(raw)
+        import soundfile as sf
+        data, sr = sf.read(str(tmp), dtype="float32", always_2d=True)
+    except Exception as exc:
+        raise HTTPException(400, f"could not decode chunk: {exc}")
+    finally:
+        tmp.unlink(missing_ok=True)
+
+    mono = data.mean(axis=1)
+    duration = len(mono) / float(sr or E.TARGET_SR)
+    rms = float(np.sqrt(np.mean(np.square(mono, dtype=np.float64)))) if len(mono) else 0.0
+    rms_db = round(20 * float(np.log10(rms + 1e-12)), 1)
+
+    # Too quiet to mean anything — do not amplify the noise floor into a label.
+    if rms_db < -50.0:
+        return {"top": [], "windows": 0, "quiet": True,
+                "duration": round(duration, 2), "rms_db": rms_db}
+
+    mono = E.normalize(E.resample(mono, sr, E.TARGET_SR))
+    model = labeller()
+    with _LIVE_LOCK:
+        scores, _ = model.scores(mono, E.TARGET_SR)
+    scores = np.asarray(scores, dtype=np.float32)
+    if not len(scores):
+        return {"top": [], "windows": 0, "quiet": True,
+                "duration": round(duration, 2), "rms_db": rms_db}
+
+    peak = scores.max(axis=0)                 # best window: catches short sounds
+    mean = scores.mean(axis=0)
+    blocked = [i for i, name in enumerate(model.labels) if name in E.NON_EVENT_LABELS]
+    raw_best = int(np.argmax(peak))
+    ranked = peak.copy()
+    ranked[blocked] = -1.0                    # Silence/Noise/Static never win
+    order = np.argsort(ranked)[::-1][:4]
+
+    return {
+        "top": [{"label": model.labels[i], "score": round(float(peak[i]), 3),
+                 "mean": round(float(mean[i]), 3)}
+                for i in order if ranked[i] > 0.02],
+        "windows": int(len(scores)),
+        "quiet": False,
+        "blocked_hit": bool(raw_best in blocked),   # model heard only silence/noise
+        "duration": round(duration, 2),
+        "rms_db": rms_db,
+    }
+
+
 @app.post("/api/analyse")
 async def analyse(
     file: UploadFile = File(...),
@@ -320,5 +421,8 @@ if __name__ == "__main__":
     import sys
 
     import uvicorn
-    port = int(sys.argv[1]) if len(sys.argv) > 1 else 8000
-    uvicorn.run(app, host="127.0.0.1", port=port, log_level="warning")
+    # PORT/HOST let a cloud host configure the listener; defaults keep the
+    # local behaviour (python server.py [port] on 127.0.0.1) unchanged.
+    port = int(os.environ.get("PORT") or (sys.argv[1] if len(sys.argv) > 1 else 8000))
+    host = os.environ.get("HOST", "127.0.0.1")
+    uvicorn.run(app, host=host, port=port, log_level="warning")
