@@ -26,12 +26,13 @@ the same command just starts. `run.bat 9000` uses a different port, and
 
 ## What you get in the browser
 
-- **An instrument-bench UI** — the page is skinned as an oscilloscope: a phosphor
-  graticule background with CRT scanlines and a signal rail sweeping across the
-  top, glowing green/cyan monospace readouts (JetBrains Mono) under technical
-  display headings (Space Grotesk), a reticle-cornered dropzone, an LED-segment
-  level meter, and every section drawn like a rack module. Pure CSS over the
-  same markup, with system-font fallbacks when offline.
+- **A forensic case-file UI** — the page is skinned as an investigation: kraft
+  paper with grain, document sheets with rubber-stamp red rules and typed
+  folder-tab headings, the headline stamped inside a red double-ruled box, a
+  ruled evidence-intake dropzone with printer's crop marks, highlighter-yellow
+  row marks and ballpoint-blue annotations. Typewriter display type (Special
+  Elite), Courier Prime for every readout, Lora for prose — all with
+  system-font fallbacks when offline. Pure CSS over the same markup.
 - **Drag and drop** a wav/mp3/ogg/flac/m4a, or **record straight from the
   microphone** — countdown, live level meter with a clipping warning, hard cap
   at 180 s, encoded to WAV in the page and uploaded automatically.
