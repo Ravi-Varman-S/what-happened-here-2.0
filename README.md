@@ -1,3 +1,7 @@
+---
+sdk: docker
+---
+
 # What Happened Here? 2.0
 
 Same project, now in a browser. Give it a 2–3 minute recording of an everyday

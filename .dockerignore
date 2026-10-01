@@ -1,0 +1,13 @@
+# not needed inside the image
+.venv/
+__pycache__/
+*.py[cod]
+results/
+.playwright-mcp/
+audio/
+*.png
+.git/
+.gitignore
+.gitattributes
+run.bat
+R_Prabu_*
