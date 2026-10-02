@@ -4,13 +4,11 @@ cd /d "%~dp0"
 set "PORT=%~1"
 if "%PORT%"=="" set "PORT=8000"
 
-rem --- prefer an existing Python that already has the libraries --------------
 set "PY=python"
 if "%WHH_VENV%"=="1" goto :build
 python -c "import numpy, scipy, soundfile, librosa, matplotlib, tensorflow, fastapi, uvicorn" >nul 2>nul
 if not errorlevel 1 goto :ready
 
-rem --- otherwise build a local virtual environment ---------------------------
 :build
 if not exist ".venv\Scripts\python.exe" (
     echo [setup] Creating virtual environment in .venv ...
