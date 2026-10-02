@@ -1,7 +1,3 @@
-# What Happened Here? 2.0 — dependencies
-# Python 3.12 (Windows)
-
-# engine (identical to v1: load, hand-written detection, YAMNet, reporting)
 numpy==2.5.3
 scipy==1.18.1
 soundfile==0.14.0
