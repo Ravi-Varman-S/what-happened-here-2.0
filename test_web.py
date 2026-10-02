@@ -1,4 +1,3 @@
-"""Smoke test for the 2.0 web API (run with the server already listening)."""
 import json
 import sys
 from pathlib import Path
@@ -10,7 +9,6 @@ HERE = Path(__file__).resolve().parent
 
 
 def sample(name: str) -> str:
-    """Use the clip shipped with this repo, else fall back to the v1 checkout."""
     local = HERE / "audio" / name
     return str(local if local.exists() else Path(r"C:\what-happened-here\audio") / name)
 
@@ -97,8 +95,6 @@ import io as _io
 
 import numpy as _np
 import soundfile as _sf
-
-# a 2.5 s slice of the street clip (24.0–26.5 s is the "Vehicle" stretch)
 _data, _sr = _sf.read(AUDIO, dtype="float32", always_2d=True)
 _seg = _data[int(24.0 * _sr):int(26.5 * _sr)]
 _buf = _io.BytesIO()
