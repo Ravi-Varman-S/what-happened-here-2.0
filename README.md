@@ -26,13 +26,15 @@ the same command just starts. `run.bat 9000` uses a different port, and
 
 ## What you get in the browser
 
-- **A pro-studio UI** — graphite ground with ambient glows and a live signal
-  trace sweeping across the top, frosted-glass panels with hairline borders
-  and soft depth, Inter for type and JetBrains Mono for every figure. One
-  signature accent — signal amber — carries all live and datum moments (level
-  bars, confidence, active stage, focus rings); cool blue marks speech; red is
-  reserved for REC / CLIP / hot levels only. Pure CSS over the same markup,
-  with system-font fallbacks when offline.
+- **A forensic-audio-workstation UI** — the page is an analysis bench: a time
+  ruler with a scanning playhead across the top, frequency-tick strips
+  capping every module, an empty waveform viewport (centreline + bottom
+  ruler) as the dropzone, a glowing measurement bezel around the spectrogram,
+  vertical scale marks on the readout cards, and a ticked timeline scrub bar
+  for progress. Graphite ground with coordinate lines, electric-cyan
+  instrumentation accent (violet = speech, amber = guessing, red = REC/CLIP),
+  IBM Plex Sans/Mono for engineering type — all with system-font fallbacks
+  when offline. Pure CSS over the same markup.
 - **Drag and drop** a wav/mp3/ogg/flac/m4a, or **record straight from the
   microphone** — countdown, live level meter with a clipping warning, hard cap
   at 180 s, encoded to WAV in the page and uploaded automatically.
