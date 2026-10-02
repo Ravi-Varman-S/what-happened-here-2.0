@@ -1,4 +1,3 @@
-"""Open the browser once the server is actually ready (used by run.bat/run.sh)."""
 import sys
 import time
 import urllib.request
