@@ -1,10 +1,4 @@
 @echo off
-rem ===========================================================================
-rem  What Happened Here? 2.0 - one command: set up, start the server, open the UI.
-rem
-rem    run.bat            start on http://127.0.0.1:8000 and open a browser
-rem    run.bat 9000       use a different port
-rem ===========================================================================
 setlocal
 cd /d "%~dp0"
 set "PORT=%~1"
