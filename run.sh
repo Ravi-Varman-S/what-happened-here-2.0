@@ -1,9 +1,3 @@
-#!/usr/bin/env bash
-# What Happened Here? 2.0 - one command: set up, start the server, open the UI.
-#
-#   ./run.sh            start on http://127.0.0.1:8000 and open a browser
-#   ./run.sh 9000       use a different port
-set -e
 cd "$(dirname "$0")"
 PORT="${1:-8000}"
 
