@@ -1,18 +1,3 @@
-"""
-What Happened Here? 2.0 — web server
-====================================
-
-Serves the *exact* v1 analysis engine (`engine.py`, byte-identical to the
-original `what_happened_here.py`) behind a browser UI.
-
-    GET  /                      the web app
-    GET  /api/config            engine defaults, so the UI and engine can't drift
-    POST /api/analyse           upload a recording -> SSE stream of 4 stages + result
-    GET  /results/<id>/...      generated spectrogram, CSV, table, summary, audio
-
-Run with:  python server.py     (or run.bat / run.sh, which also opens a browser)
-"""
-
 from __future__ import annotations
 
 import contextlib
