@@ -26,13 +26,13 @@ the same command just starts. `run.bat 9000` uses a different port, and
 
 ## What you get in the browser
 
-- **A forensic case-file UI** — the page is skinned as an investigation: kraft
-  paper with grain, document sheets with rubber-stamp red rules and typed
-  folder-tab headings, the headline stamped inside a red double-ruled box, a
-  ruled evidence-intake dropzone with printer's crop marks, highlighter-yellow
-  row marks and ballpoint-blue annotations. Typewriter display type (Special
-  Elite), Courier Prime for every readout, Lora for prose — all with
-  system-font fallbacks when offline. Pure CSS over the same markup.
+- **A pro-studio UI** — graphite ground with ambient glows and a live signal
+  trace sweeping across the top, frosted-glass panels with hairline borders
+  and soft depth, Inter for type and JetBrains Mono for every figure. One
+  signature accent — signal amber — carries all live and datum moments (level
+  bars, confidence, active stage, focus rings); cool blue marks speech; red is
+  reserved for REC / CLIP / hot levels only. Pure CSS over the same markup,
+  with system-font fallbacks when offline.
 - **Drag and drop** a wav/mp3/ogg/flac/m4a, or **record straight from the
   microphone** — countdown, live level meter with a clipping warning, hard cap
   at 180 s, encoded to WAV in the page and uploaded automatically.
