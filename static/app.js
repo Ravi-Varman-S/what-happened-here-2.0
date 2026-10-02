@@ -301,8 +301,12 @@ const LIVE_TAIL = 1.8;      // seconds of audio sent each time
 
 function maybeSendLive(t) {
   const s = RECORDING;
-  if (!s || !s.armed || s.stop || LIVE.done || LIVE.busy || LIVE.fails >= 5) return;
-  if (t - LIVE.sent < LIVE_EVERY || t < LIVE_TAIL) return;
+  if (!s || !s.armed || s.stop || LIVE.done || LIVE.busy) return;
+  // After repeated failures (server restarting / still warming up) back off to
+  // a slow probe instead of giving up for the rest of the recording — one
+  // success resets the counter and live labels resume.
+  const every = LIVE.fails >= 5 ? 15 : LIVE_EVERY;
+  if (t - LIVE.sent < every || t < LIVE_TAIL) return;
   LIVE.busy = true;
   LIVE.sent = t;
 
@@ -330,7 +334,8 @@ function tailWav(state, sec) {
 
 function applyLabels(res, t0, t1) {
   if (!res || !res.top || !res.top.length) {
-    if (res && res.quiet && !LIVE.cur) { LIVE.ident = []; renderIdent(); }
+    if (res && res.quiet) LIVE.ident = [];   // nothing to hear — clear the chips
+    renderIdent();
     return;
   }
   LIVE.ident = res.top;
@@ -339,6 +344,8 @@ function applyLabels(res, t0, t1) {
   const ev = eventAt(t0, t1);
   if (!ev) return;
   const best = res.top[0];
+  const floor = (CONFIG && CONFIG.confidence) || 0.2;
+  if (best.score < floor) return;           // engine parity: a below-floor guess is not a label
   if (best.score < (ev.score || 0)) return;               // keep the stronger answer
   ev.label = best.label;
   ev.score = best.score;
@@ -361,7 +368,12 @@ function eventAt(t0, t1) {
 
 function renderLiveStatus() {
   const e = LIVE.cur;
-  if (!e) { liveStatus("quiet", `<span class="big">🤫</span> Quiet — listening…`); return; }
+  if (!e) {
+    const id = $("lpIdent");
+    if (id) id.hidden = true;        // never keep stale "hears" chips beside a Quiet status
+    liveStatus("quiet", `<span class="big">🤫</span> Quiet — listening…`);
+    return;
+  }
   const sp = liveSpeaking();
   if (e.label) {
     liveStatus(sp ? "speech" : "sound",
@@ -377,7 +389,10 @@ function renderLiveStatus() {
 function renderIdent() {
   const el = $("lpIdent");
   if (!el) return;
-  if (LIVE.done || !LIVE.ident.length) { el.hidden = true; return; }
+  // Hidden when finished, empty, or when the room is quiet: the status line says
+  // Quiet then, and chips from an earlier window would contradict it. Fresh
+  // labels re-show it as soon as an answer for the current sound arrives.
+  if (LIVE.done || !LIVE.ident.length || !LIVE.cur) { el.hidden = true; return; }
   el.hidden = false;
   el.innerHTML = `<span class="lp-ident-l">hears</span>` + LIVE.ident.map((c, i) =>
     `<span class="chip${i === 0 ? " top" : ""}">${esc(c.label)} ` +
